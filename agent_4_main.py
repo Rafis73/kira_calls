@@ -115,7 +115,6 @@ def upload_to_drive(drive_service, filename, folder_id):
         print(f"Ошибка загрузки на Google Drive: {e}")
         return None
 
-# --- ИЗМЕНЕННАЯ ФУНКЦИЯ ---
 def format_transcript(transcript_data):
     lines = []
     last_role = None
@@ -125,7 +124,6 @@ def format_transcript(transcript_data):
     for msg in transcript_data:
         current_role = msg.get("role", "UNKNOWN")
         
-        # Добавляем пустую строку, если спикер сменился
         if last_role and last_role != current_role:
             lines.append("")
             
@@ -138,7 +136,11 @@ def format_transcript(transcript_data):
     return "\n".join(lines)
 
 # --- ИЗМЕНЕННАЯ ФУНКЦИЯ ---
-def append_to_google_doc(docs_service, summary, transcript, audio_link, start_time_str):
+def append_to_google_doc(docs_service, summary, transcript, audio_info_line, start_time_str):
+    """
+    Добавляет запись в Google Doc.
+    Принимает готовую строку с информацией об аудио.
+    """
     try:
         summary_block = ""
         if summary:
@@ -148,7 +150,7 @@ def append_to_google_doc(docs_service, summary, transcript, audio_link, start_ti
             f"--- Запись от {start_time_str} ---\n\n"
             f"{summary_block}"
             f"Транскрибация:\n{transcript}\n\n"
-            f"Ссылка на аудиофайл: {audio_link}\n\n"
+            f"{audio_info_line}\n\n"  # Используем новую переменную напрямую
             "-----------------------------------------\n\n"
         )
         requests_body = [{'insertText': {'location': {'index': 1}, 'text': content}}]
@@ -157,6 +159,7 @@ def append_to_google_doc(docs_service, summary, transcript, audio_link, start_ti
     except Exception as e:
         print(f"Ошибка добавления в Google Doc: {e}")
 
+# --- ИЗМЕНЕННАЯ ФУНКЦИЯ ---
 def main():
     print("Начало работы скрипта...")
     docs_service, drive_service = get_google_services()
@@ -165,12 +168,12 @@ def main():
 
     processed_ids = get_processed_ids()
     print(f"Загружено {len(processed_ids)} уже обработанных ID.")
-    
+
     conversations = get_new_conversations()
     if not conversations:
         print("Разговоров для агента не найдено.")
         return
-        
+
     conversations.sort(key=lambda c: c.get("start_time_unix_secs", 0))
 
     new_items_found = 0
@@ -179,40 +182,44 @@ def main():
         if conv_id and conv_id not in processed_ids:
             print(f"\n--- Обработка новой записи: {conv_id} ---")
             new_items_found += 1
-            
+
             details = get_conversation_details(conv_id)
             if not details:
                 print(f"Не удалось получить детали для {conv_id}. Пропускаем.")
+                save_processed_id(conv_id)
                 time.sleep(1)
                 continue
 
             audio_filename = download_conversation_audio(conv_id)
             if not audio_filename:
-                print(f"Не удалось скачать аудио для {conv_id}. Пропускаем.")
+                print(f"Не удалось скачать аудио для {conv_id}. Запись не будет добавлена. Пропускаем.")
+                save_processed_id(conv_id) 
                 time.sleep(1)
                 continue
-            
-            # --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
+
             start_ts = details.get("metadata", {}).get("start_time_unix_secs", 0)
             start_time_str = datetime.fromtimestamp(start_ts).strftime('%Y-%m-%d %H:%M:%S') if start_ts else "N/A"
-            
-            # Получаем summary
+
             summary_text = (details.get("analysis") or {}).get("transcript_summary", "").strip()
-            
             transcript_text = format_transcript(details.get("transcript", [])) or "Транскрибация пуста."
 
             audio_link = upload_to_drive(drive_service, audio_filename, GOOGLE_DRIVE_FOLDER_ID)
-            
+
+            audio_info_line = ""
             if audio_link:
-                # Передаем summary в функцию
-                append_to_google_doc(docs_service, summary_text, transcript_text, audio_link, start_time_str)
-                save_processed_id(conv_id)
+                audio_info_line = f"Ссылка на аудиофайл: {audio_link}"
+            else:
+                audio_info_line = "Ссылка на аудиофайл: НЕ УДАЛОСЬ ЗАГРУЗИТЬ (вероятно, закончилось место на Google Диске)."
+
+            append_to_google_doc(docs_service, summary_text, transcript_text, audio_info_line, start_time_str)
             
+            save_processed_id(conv_id)
+
             os.remove(audio_filename)
 
     if new_items_found == 0:
         print("Новых записей для обработки не найдено.")
-    
+
     print("Работа скрипта завершена.")
 
 if __name__ == '__main__':
