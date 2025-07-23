@@ -28,28 +28,11 @@ jobs:
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          AGENT_1_ID: ${{ secrets.AGENT_1_ID }}
-          AGENT_1_DOC_ID: ${{ secrets.AGENT_1_DOC_ID }}
-          AGENT_1_DRIVE_FOLDER_ID: ${{ secrets.AGENT_1_DRIVE_FOLDER_ID }}
+          AGENT_4_ID: ${{ secrets.AGENT_1_ID }}
+          AGENT_4_DOC_ID: ${{ secrets.AGENT_1_DOC_ID }}
+          AGENT_4_DRIVE_FOLDER_ID: ${{ secrets.AGENT_1_DRIVE_FOLDER_ID }}
 
-      - name: Run script for Agent 2
-        run: python agent_2_main.py
-        env:
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          AGENT_2_ID: ${{ secrets.AGENT_2_ID }}
-          AGENT_2_DOC_ID: ${{ secrets.AGENT_2_DOC_ID }}
-          AGENT_2_DRIVE_FOLDER_ID: ${{ secrets.AGENT_2_DRIVE_FOLDER_ID }}
-
-      - name: Run script for Agent 3
-        run: python agent_3_main.py
-        env:
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          AGENT_3_ID: ${{ secrets.AGENT_3_ID }}
-          AGENT_3_DOC_ID: ${{ secrets.AGENT_3_DOC_ID }}
-          AGENT_3_DRIVE_FOLDER_ID: ${{ secrets.AGENT_3_DRIVE_FOLDER_ID }}
-      
+           
       - name: Commit and push if changed
         run: |
           git config --global user.name 'github-actions[bot]'
