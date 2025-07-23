@@ -1,41 +1,53 @@
-name: Sync ElevenLabs Calls
+# Имя рабочего процесса, которое будет отображаться в разделе "Actions" вашего репозитория
+name: 'Выгрузка звонков с агента ElevenLabs'
 
+# Триггеры для запуска рабочего процесса
 on:
+  # Запуск по расписанию (используется синтаксис cron)
   schedule:
-    - cron: '*/30 * * * *' # Запускать каждые 20 минут
-  workflow_dispatch: # Позволяет запускать вручную
+    # Эта строчка означает "запускать каждые 30 минут"
+    - cron: '*/30 * * * *'
+  
+  # Позволяет запускать этот рабочий процесс вручную со страницы "Actions"
+  workflow_dispatch:
 
+# Описание задач (jobs), которые будут выполняться
 jobs:
-  build:
+  # Имя задачи (может быть любым)
+  run-python-script:
+    # Указываем, на какой операционной системе будет работать скрипт
     runs-on: ubuntu-latest
 
+    # Шаги, которые будут выполнены в рамках задачи
     steps:
+      # 1. Клонирование вашего репозитория
+      # Этот шаг необходим, чтобы получить доступ к вашему Python-скрипту
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      # 2. Установка Python
+      # Указываем нужную версию Python
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.10' # Вы можете указать другую версию, если нужно
 
+      # 3. Установка зависимостей
+      # Устанавливаем библиотеки, которые требуются вашему скрипту
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install requests google-api-python-client google-auth-oauthlib google-auth-httplib2
 
-      - name: Run script for Agent 1
-        run: python agent_1_main.py
+      # 4. Запуск скрипта
+      # Выполняем ваш Python-скрипт и передаем ему секретные переменные
+      - name: Run script
+        # Используем `env`, чтобы установить переменные окружения, которые читает ваш скрипт
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          AGENT_4_ID: ${{ secrets.AGENT_4_ID }}
+          AGENT_4_DOC_ID: ${{ secrets.AGENT_4_DOC_ID }}
+          AGENT_4_DRIVE_FOLDER_ID: ${{ secrets.AGENT_4_DRIVE_FOLDER_ID }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          AGENT_4_ID: ${{ secrets.AGENT_1_ID }}
-          AGENT_4_DOC_ID: ${{ secrets.AGENT_1_DOC_ID }}
-          AGENT_4_DRIVE_FOLDER_ID: ${{ secrets.AGENT_1_DRIVE_FOLDER_ID }}
-
-           
-      - name: Commit and push if changed
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          git diff --staged --quiet || (git commit -m "Update processed IDs" && git push)
+        # Укажите здесь правильное имя вашего Python-файла
+        run: python agent_4_main.py 
