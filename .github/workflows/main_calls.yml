@@ -6,7 +6,7 @@ on:
   # 1. Запуск по расписанию (cron-синтаксис)
   schedule:
     # Эта строчка означает "запускать каждые 30 минут"
-    # (в 0, 30 минут каждого часа).
+    # (в 0 и 30 минут каждого часа).
     - cron: '*/30 * * * *'
   
   # 2. Ручной запуск
@@ -34,7 +34,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10' 
+          python-version: '3.10'
 
       # Шаг 3: Установка зависимостей
       # Устанавливаем все библиотеки, которые требуются вашему скрипту для работы
@@ -55,4 +55,4 @@ jobs:
           AGENT_4_DRIVE_FOLDER_ID: ${{ secrets.AGENT_4_DRIVE_FOLDER_ID }}
           GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
         # ОБЯЗАТЕЛЬНО замените 'your_script_name.py' на реальное имя вашего файла!
-          run: python agent_4_main.py 
+        run: python agent_4_main.py
